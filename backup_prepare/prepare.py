@@ -896,25 +896,32 @@ class Prepare(GeneralClass):
         # Move datadir to new directory
         logger.debug("Moving MySQL datadir to {}".format(self.tmpdir))
         if os.path.isdir(self.tmpdir):
-            rmdirc = 'rm -rf {}'.format(self.tmpdir)
+            rmdirc = 'rm -rf {}/*'.format(self.tmpdir)
             status, output = subprocess.getstatusoutput(rmdirc)
             if status == 0:
                 logger.debug("Emptied {} directory ...".format(self.tmpdir))
                 try:
-                    shutil.move(self.datadir, self.tmpdir)
-                    logger.debug("Moved datadir to {} ...".format(self.tmpdir))
+                    logger.debug("Begin move datadir to {}.".format(self.tmpdir))
+                    move_datadir = 'mv -v {0}/* {1}'.format(self.datadir, self.tmpdir)
+                    status_move_datadir, output_move_datadir = subprocess.getstatusoutput(move_datadir)
+                    if status_move_datadir == 0:
+                        logger.debug("Moved datadir to {} ...".format(self.tmpdir))
+                    else:
+                        logger.error("Error occurred while moving datadir")
+                        logger.error(output_move_datadir)
+                        return False
                 except shutil.Error as err:
                     logger.error("Error occurred while moving datadir")
                     logger.error(err)
                     return False
 
-                logger.debug("Creating an empty data directory ...")
-                makedir = "mkdir {}".format(self.datadir)
-                status2, output2 = subprocess.getstatusoutput(makedir)
+                logger.debug("Empty data directory ...")
+                emptydir = "rm -rf {}/*".format(self.datadir)
+                status2, output2 = subprocess.getstatusoutput(emptydir)
                 if status2 == 0:
-                    logger.debug("Datadir is Created! ...")
+                    logger.debug("Datadir is empty! ...")
                 else:
-                    logger.error("Error while creating datadir")
+                    logger.error("Error while emptying datadir")
                     logger.error(output2)
                     return False
 
@@ -927,21 +934,41 @@ class Prepare(GeneralClass):
 
         else:
             try:
-                shutil.move(self.datadir, self.tmpdir)
-                logger.debug("Moved datadir to {} ...".format(self.tmpdir))
+                logger.debug("Begin move datadir to {}.".format(self.tmpdir))
+
+                #create empty tmpdir
+                makedir = "mkdir {}".format(self.tmpdir)
+                status, output = subprocess.getstatusoutput(makedir)
+                if status == 0:
+                    logger.debug("tmpdir is Created! ...")
+                else:
+                    logger.error("Error while creating tmpdir")
+                    logger.error(output)
+                    return False
+
+                #moving datadir
+                move_datadir = 'mv -v {0}/* {1}'.format(self.datadir, self.tmpdir)
+                status_move_datadir, output_move_datadir = subprocess.getstatusoutput(move_datadir)
+                if status_move_datadir == 0:
+                    logger.debug("Moved datadir to {} ...".format(self.tmpdir))
+                else:
+                    logger.error("Error occurred while moving datadir")
+                    logger.error(output_move_datadir)
+                    return False
+
             except shutil.Error as err:
                 logger.error("Error occurred while moving datadir")
                 logger.error(err)
                 return False
-
-            logger.debug("Creating an empty data directory ...")
-            makedir = "mkdir {}".format(self.datadir)
-            status2, output2 = subprocess.getstatusoutput(makedir)
+            
+            logger.debug("Empty data directory ...")
+            emptydir = "rm -rf {}/*".format(self.datadir)
+            status2, output2 = subprocess.getstatusoutput(emptydir)
             if status2 == 0:
-                logger.debug("Datadir is Created! ...")
+                logger.debug("Datadir is empty! ...")
                 return True
             else:
-                logger.error("Error while creating datadir")
+                logger.error("Error while emptying datadir")
                 logger.error(output2)
                 return False
 
